@@ -31,17 +31,32 @@ const promoMessages = [
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [currentPromo, setCurrentPromo] = useState(0);
   const [showShopDropdown, setShowShopDropdown] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      const currentScrollY = window.scrollY;
+      
+      // Determine scroll direction
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down & past threshold - hide navbar
+        setIsVisible(false);
+      } else {
+        // Scrolling up - show navbar
+        setIsVisible(true);
+      }
+      
+      setIsScrolled(currentScrollY > 10);
+      setLastScrollY(currentScrollY);
     };
-    window.addEventListener("scroll", handleScroll);
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -80,7 +95,9 @@ export function Header() {
   return (
     <>
       {/* Top Promo Bar */}
-      <div className="fixed top-0 left-0 right-0 z-[60] bg-primary text-primary-foreground">
+      <div className={`fixed top-0 left-0 right-0 z-[60] bg-primary text-primary-foreground transition-transform duration-300 ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      }`}>
         <div className="relative h-9 flex items-center justify-center overflow-hidden">
           {/* Prev Arrow */}
           <button
@@ -121,6 +138,8 @@ export function Header() {
       {/* Main Header */}
       <header
         className={`fixed top-9 left-0 right-0 z-50 transition-all duration-300 ${
+          isVisible ? "translate-y-0" : "-translate-y-[calc(100%+2.25rem)]"
+        } ${
           isScrolled
             ? "bg-background/98 backdrop-blur-md shadow-soft py-1.5"
             : "bg-background py-2"
